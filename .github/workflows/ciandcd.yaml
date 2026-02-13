@@ -93,5 +93,5 @@ jobs:
           git push https://${{ secrets.GIT_TOKEN }}@github.com/${{ env.HELM_REPO }}
       - name: Clean up
         run: |
-          rm -rf helm-repo 
+          rm -rf helm-repo  
 
