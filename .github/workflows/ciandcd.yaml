@@ -8,7 +8,7 @@ env:
   # TAG: "v0.1.0" # version dynamic 
   HELM_REPO: mengchhundev/spring-chart.git
   
-
+  
 jobs:
   build-and-push:
     runs-on: ubuntu-latest 
@@ -80,14 +80,14 @@ jobs:
         run: |
           
           cd helm-repo
-          # sed -i "s|image:|image:\n  repository: ${{ secrets.USERNAME }}/${{ env.IMAGE_NAME }}\n  tag: ${{ env.TAG }}|" /values.yaml
+          # sed -i "s|image:|image:\n  repository: ${{ secrets.USERNAME }}/${{ env.IMAGE_NAME }}\n  tag: ${{ env.TAG }}|" spring-chart/values.yaml
           # using yq in order to edit the value of the yaml file 
           
-          yq -i ".image.repository=\"${{ secrets.USERNAME }}/${{ env.IMAGE_NAME }}\" /values.yaml
-          yq -i ".image.tag=\"${{ env.TAG }}\"" /values.yaml
+          yq -i ".image.repository=\"${{ secrets.USERNAME }}/${{ env.IMAGE_NAME }}\"" values.yaml
+          yq -i ".image.tag=\"${{ env.TAG }}\"" values.yaml
 
-          git config --global user.email "menghhun232@gmail.com"
-          git config --global user.name "menghhun"
+          git config --global user.email "keokay888@gmail.com"
+          git config --global user.name "keoKAY"
           git add .
           git commit -m "Update image to ${{ env.IMAGE_NAME }}:${{ env.TAG }}"
           git push https://${{ secrets.GIT_TOKEN }}@github.com/${{ env.HELM_REPO }}
