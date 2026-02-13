@@ -3,15 +3,15 @@ on:
     branches: [ "master" ]
 
 env:
-  NEXUS_REGISTRY: registry-new.devnerd.store # nexus repo for storing docker image 
-  IMAGE_NAME: spring-fileupload-image-nexus
+  # NEXUS_REGISTRY: registry-new.devnerd.store # nexus repo for storing docker image 
+  IMAGE_NAME: spring-fileupload-10
   # TAG: "v0.1.0" # version dynamic 
-  HELM_REPO: keoKAY/helm-sample-one.git
+  HELM_REPO: mengchhundev/spring-chart.git
   
 jobs:
   build-and-push:
     runs-on: ubuntu-latest 
-    environment: NEXUS_REPOSITORY
+    environment: DOCKER_ENV
     
     steps:
     - name: Checkout code
@@ -25,12 +25,12 @@ jobs:
         echo "Tag value is: ${{ env.TAG }}"
 
  
-    - name: Login to Nexus Registry
+    - name: Login to Docker registry
       run: |
-        echo "${{ secrets.PASSWORD }}" | docker login ${{ env.NEXUS_REGISTRY }} -u ${{ secrets.USERNAME }} --password-stdin
+        echo "${{ secrets.PASSWORD }}" | docker login -u ${{ secrets.USERNAME }} --password-stdin
 
     # - name: Build Docker image
-    #   run: docker build -t ${{ env.NEXUS_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }} .
+    #   run: docker build -t ${{ secrets.USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.TAG }} .
  
     - name: Build the docker image and push it to repo 
       uses: docker/build-push-action@v4
@@ -41,19 +41,19 @@ jobs:
         build-args: |
           APP_PORT=${{ env.APP_PORT }}
         tags: |
-          ${{ env.NEXUS_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
+          ${{ secrets.USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
     - name: Push Docker image
       run: |
-        docker push ${{ env.NEXUS_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
+        docker push ${{ secrets.USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
 
-    - name: Logout from Nexus Registry 
+    - name: Logout from Docker Registry 
       if: always() # this ensure the logout runs even if the previous step fails. 
       run: |
-        docker logout ${{ env.NEXUS_REGISTRY }}
+        docker logout 
   update-helm-repo: 
     needs: build-and-push
     runs-on: ubuntu-latest 
-    environment: NEXUS_REPOSITORY 
+    environment: DOCKER_ENV 
     steps:  
       - name: Installing yq for easily work with the values file 
         run: |
@@ -73,17 +73,17 @@ jobs:
           GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
       - name: Update Helm chart
         env: 
-          NEXUS_REPOSITORY: ${{ env.NEXUS_REPOSITORY }}
+          # NEXUS_REPOSITORY: ${{ env.NEXUS_REPOSITORY }}
           IMAGE_NAME: ${{ env.IMAGE_NAME }}
           TAG: ${{ env.TAG }}
         run: |
           
           cd helm-repo
-          # sed -i "s|image:|image:\n  repository: ${{ env.NEXUS_REGISTRY }}/${{ env.IMAGE_NAME }}\n  tag: ${{ env.TAG }}|" springboot-chart/values.yaml
+          # sed -i "s|image:|image:\n  repository: ${{ secrets.USERNAME }}/${{ env.IMAGE_NAME }}\n  tag: ${{ env.TAG }}|" spring-chart/values.yaml
           # using yq in order to edit the value of the yaml file 
           
-          yq -i ".image.repository=\"${{ env.NEXUS_REGISTRY }}/${{ env.IMAGE_NAME }}\"" springboot-chart/values.yaml
-          yq -i ".image.tag=\"${{ env.TAG }}\"" springboot-chart/values.yaml
+          yq -i ".image.repository=\"${{ secrets.USERNAME }}/${{ env.IMAGE_NAME }}\"" spring-chart/values.yaml
+          yq -i ".image.tag=\"${{ env.TAG }}\"" spring-chart/values.yaml
 
           git config --global user.email "keokay888@gmail.com"
           git config --global user.name "keoKAY"
